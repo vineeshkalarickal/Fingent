@@ -1,11 +1,14 @@
 <?php
 require_once("../settings/config.php");
-// Get form data
+require_once("../settings/helper_functions.php");
+// initialize helper function object
+$helpF  = new HelperFunctions();
+
 // Get form data
 $throttleLimit = filter_input(INPUT_POST, 'throttleLimit', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1,
-'max_range' => 10]]) ?? 2;
+'max_range' => 10]]) ?? THROTTLE_LIMIT;
 $throttleTime = filter_input(INPUT_POST, 'throttleTime', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1,
-'max_range' => 60]]) ?? 1;
+'max_range' => 60]]) ?? THROTTLE_TIME;
 $referrers = array_map('trim', explode(',', htmlspecialchars($_POST['referrers']))) ?? [];
 
 
@@ -15,7 +18,7 @@ $referrer = $_SERVER['HTTP_REFERER'];
 // Check if the referrer is in the list of referrers to throttle
 if (in_array($referrer, $referrers)) {
     $now = round(microtime(true) * 1000);
-    $requestCount = getFromStorage($referrer);
+    $requestCount = $helpF->getFromStorage($referrer);
 
     // If there is no previous count, set it to 0
     if (!$requestCount) {
@@ -40,13 +43,11 @@ if (in_array($referrer, $referrers)) {
 
     // Save the new request count to storage
     $requestCount['time'] = $now;
-    saveToStorage($referrer, $requestCount);
+    $helpF->saveToStorage($referrer, $requestCount);
 
 }
 
 // Serve the requested resource
-serveResource();
-
-require_once("../settings/helper_functions.php");
+$helpF->serveResource();
 
 ?>
